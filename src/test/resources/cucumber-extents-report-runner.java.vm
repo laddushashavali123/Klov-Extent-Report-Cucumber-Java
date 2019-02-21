@@ -1,0 +1,60 @@
+#parse("/array.java.vm")
+        #if($packageName)
+        package $packageName;
+
+        #end
+import CommonUtil;
+import FileMgmtUtil;
+import com.vimalselvam.cucumber.listener.ExtentProperties;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.runner.RunWith;
+
+import cucumber.api.CucumberOptions;
+import cucumber.api.junit.Cucumber;
+import com.vimalselvam.cucumber.listener.Reporter;
+
+import java.io.File;
+
+@RunWith(Cucumber.class)
+@CucumberOptions(
+        strict = $strict,
+        features = {"$featureFile"},
+        plugin = #stringArray($plugins),
+        monochrome = $monochrome,
+        #if(!$featureFile.contains(".feature:") && $tags)
+        tags= #stringArray($tags),
+        #end
+        glue= #stringArray($glue))
+public class $className {
+
+    private final static String FEATURE_NAME = "$featureFile".substring("$featureFile".lastIndexOf("/") + 1, "$featureFile".indexOf(".feature"));
+
+    @BeforeClass
+    public static void beforeClass() {
+        ExtentProperties extentProperties = ExtentProperties.INSTANCE;
+        extentProperties.setReportPath("target/reports/myreport.html");
+        extentProperties.setKlovServerUrl("http://localhost:2019");
+
+        // specify project
+        // ! you must specify a project, other a "Default project will be used"
+        extentProperties.setKlovProjectName(FileMgmtUtil.getPropertyValue("app.name"));
+        // you must specify a reportName otherwise a default timestamp will be used
+        extentProperties.setKlovReportName(FEATURE_NAME + " " + CommonUtil.getTimeStamp());
+        // Mongo DB Configuration
+        extentProperties.setMongodbHost("localhost");
+        extentProperties.setMongodbPort(27017);
+        extentProperties.setMongodbDatabase("klov");
+
+        // If mongo Db is running in Authentication mode provide username and password
+//        extentProperties.setMongodbUsername("username");
+//        extentProperties.setMongodbPassword("password");
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        Reporter.loadXMLConfig(new File("src/test/resources/extent-config.xml"));
+        Reporter.setSystemInfo("user", System.getProperty("user.name"));
+        Reporter.setSystemInfo("os", "Windows");
+    }
+}
